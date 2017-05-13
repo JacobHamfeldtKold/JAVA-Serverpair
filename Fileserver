@@ -1,0 +1,244 @@
+/**
+ * Created by jacobhamfeldtkold on 30/04/2017.
+ */
+import java.net.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+
+
+/**
+ * The Handler for SAX Events.
+ */
+
+
+class SAXHandler extends DefaultHandler {
+    
+    List<Student> global_stdList;
+    Student std = null;
+    String content = null;
+    
+    public void startDocument() throws SAXException {
+        global_stdList = new ArrayList<>();
+    }
+    
+    @Override
+    //Triggered when the start of tag is found.
+    public void startElement(String uri, String localName,
+                             String qName, Attributes attributes)
+    throws SAXException {
+        
+        switch(qName){
+                //Create a new Student object when the start tag is found
+            case "student":
+                std = new Student();
+                std.id = attributes.getValue("id");
+                std.active = attributes.getValue("active");
+                break;
+        }
+    }
+    
+    @Override
+    public void endElement(String uri, String localName,
+                           String qName) throws SAXException {
+        switch(qName){
+                //Add the Student to list once end tag is found
+            case "student":
+                global_stdList.add(std);
+                break;
+                //For all other end tags the Student has to be updated.
+            case "firstName":
+                std.firstName = content;
+                break;
+            case "lastName":
+                std.lastName = content;
+                break;
+            case "location":
+                std.location = content;
+                break;
+        }
+    }
+    
+    @Override
+    public void characters(char[] ch, int start, int length)
+    throws SAXException {
+        content = String.copyValueOf(ch, start, length).trim();
+    }
+    
+    public void endDocument() throws SAXException {
+        //Printing the list of Students obtained from XML
+        for (Student std : global_stdList){
+            System.out.println(std);
+        }
+    }
+}
+/*
+
+public class echoserver{
+    public static void main(String[] args) throws IOException, Exception {
+        if(args.length != 1){
+            System.err.println("Usage: java EchoServer <port number>");
+            System.exit(1);
+        }
+        
+        // List<Student> global_stdList;
+        
+        SAXParserFactory parserFactor = SAXParserFactory.newInstance();
+        SAXParser parser = parserFactor.newSAXParser();
+        SAXHandler handler = new SAXHandler();
+        
+        
+        int portNumber = Integer.parseInt(args[0]);
+        
+        try{
+            System.out.println("Waiting for someone to connect on port number " + portNumber + "...");
+            
+            ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]));
+            System.out.println("One");
+            Socket clientSocket = serverSocket.accept();
+            System.out.println("Two");
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(),true);
+            System.out.println("Three");
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            System.out.println("Four");
+            BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+            
+            parser.parse(ClassLoader.getSystemResourceAsStream("Student.xml"),
+                         handler);
+            //String printingInput = stdIn.readLine();
+            //System.out.println(printingInput);
+            String inputline;
+            
+            handler.global_stdList.get(0);
+            
+            while((inputline = in.readLine())!= null) { // saving input from clientserver in variable inputline
+                // out.println(inputline);
+                
+                parser.parse(ClassLoader.getSystemResourceAsStream("Student.xml"),
+                             handler);
+                
+                // out.println(inputline);
+                
+                out.println(handler.global_stdList );
+            }
+            
+            
+        }catch(IOException e){
+            System.out.println(" Exception caught when trying to listen on port " + portNumber + " or listening for a connection");
+            System.out.println(e.getMessage());
+        }
+    }
+    
+     */
+    
+    class Student {
+        
+        String id;
+        String active;
+        String firstName;
+        String lastName;
+        String location;
+        
+        @Override
+        public String toString() {
+            return firstName + " " + lastName + "(" + id + ")" + location + " Active: " + active;
+        }
+    }
+    
+
+
+ 
+
+
+public class fileserver {
+    public static void main(String[] args) throws IOException, Exception {
+        
+        if(args.length != 1){
+            System.err.println("Usage: java EchoServer <port number>");
+            System.exit(1);
+        }
+        
+        List<Student> global_stdList;
+        SAXParserFactory parserFactor = SAXParserFactory.newInstance();
+        SAXParser parser = parserFactor.newSAXParser();
+        SAXHandler handler = new SAXHandler();
+        
+        int portNumber = Integer.parseInt(args[0]);
+        ServerSocket serverSocket = null;
+        
+        try {
+            serverSocket = new ServerSocket(portNumber);
+        } catch (IOException ex) {
+            System.out.println("Can't setup server on this port number. ");
+        }
+        
+        Socket socket = null;
+        InputStream in = null;
+        OutputStream out = null;
+        
+        try {
+            socket = serverSocket.accept();
+        } catch (IOException ex) {
+            System.out.println("Can't accept client connection. ");
+        }
+        
+        try {
+            in = socket.getInputStream();
+        } catch (IOException ex) {
+            System.out.println("Can't get socket input stream. ");
+        }
+        
+        try {
+            out = new FileOutputStream("/Users/jacobhamfeldtkold/Documents/JAVA/File_serverclient_pair/thenewfile.xml");
+        } catch (FileNotFoundException ex) {
+            System.out.println("File not found. ");
+        }
+        
+        byte[] bytes = new byte[16*1024];
+        
+        int count;
+        while ((count = in.read(bytes)) > 0) {
+            out.write(bytes, 0, count);
+                    }
+        
+       
+
+        
+        out.close();
+        in.close();
+        socket.close();
+        serverSocket.close();
+        
+        parser.parse(ClassLoader.getSystemResourceAsStream("thenewfile.xml"),
+                     handler);
+        //out.println(handler.global_stdList ); Printwriter must be created first
+        
+        ServerSocket serverSocketEcho = new ServerSocket(Integer.parseInt(args[0]));
+        System.out.println("One");
+        Socket clientSockettext = serverSocketEcho.accept();
+        PrintWriter outecho = new PrintWriter(clientSockettext.getOutputStream(),true);
+        System.out.println ("two" );
+        BufferedReader inecho = new BufferedReader(new InputStreamReader(clientSockettext.getInputStream()));
+        System.out.println ("three" );
+        
+        String inputline;
+        
+        while((inputline = inecho.readLine())!= null) { // saving input from clientserver in variable inputline
+          
+            System.out.println(inputline + "\n" + "  four  " + handler.global_stdList);
+            outecho.println(inputline + "" + handler.global_stdList );
+        }
+        
+        System.out.println("outofwhileloop");
+        outecho.close();
+        inecho.close();
+        clientSockettext.close();
+        serverSocketEcho.close();
+    }
+}
