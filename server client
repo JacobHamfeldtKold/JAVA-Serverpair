@@ -1,0 +1,111 @@
+import java.io.*;
+import java.net.*;
+
+
+public class fileclient extends Thread {
+    public static void main(String[] args) throws IOException {
+        
+        if(args.length != 3){
+            System.err.println("Usage: java EchoClient <host name> <port number> <filename> ");
+            System.exit(1);
+        }
+        
+        String hostName = args[0];
+        int portNumber = Integer.parseInt(args[1]);
+        
+        Socket socket = null;
+        
+        
+        socket = new Socket(hostName, portNumber);
+        String filename = "test.xml";
+        
+        File file = new File(args[2]);
+        //File file = new File("/Users/jacobhamfeldtkold/Documents/JAVA/File_serverclient_pair/test.xml");
+        // Get the size of the file
+        
+        byte[] bytes = new byte[16 * 1024];
+        InputStream in = new FileInputStream(file);
+        OutputStream out = socket.getOutputStream();
+        
+        // public int read(byte[] b)
+      //  throws IOException Reads up to b.length bytes of data from this input stream into an array of bytes.
+
+        int count;
+        while ((count = in.read(bytes)) > 0) {
+        out.write(bytes, 0, count);
+        }
+        
+        out.close();
+        in.close();
+        socket.close();
+        
+        System.out.println (socket.getLocalAddress() );
+        
+        try{
+        Thread.sleep(3000);
+        }
+        catch(InterruptedException e)
+        
+        { System.out.println(e); }
+        
+        OutputStream outfile = null;
+        try{
+        
+        Socket echoSocket = new Socket(hostName, portNumber);
+        System.out.println ("one" );
+        PrintWriter outecho = new PrintWriter(echoSocket.getOutputStream(), true);
+        System.out.println ("two" );
+            InputStream inecho = null;
+            inecho = echoSocket.getInputStream();
+        System.out.println ("three" );
+        BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+        
+        
+        
+        
+         String userInput;
+           
+            try {
+                outfile = new FileOutputStream("/Users/jacobhamfeldtkold/Documents/JAVA/File_serverclient_pair/thenewfile4.txt");
+            } catch (FileNotFoundException ex) {
+                System.out.println("File not found. ");
+            }
+
+            
+            
+            byte[] morebytes = new byte[16*1024];
+            System.out.println("Write a commentary to the processed xml file");
+            while((userInput = stdIn.readLine())!= null){
+                outecho.println(userInput);
+                System.out.println("test");
+                break;
+            }
+            System.out.println("test2");
+            int counter;
+            while ((counter = inecho.read(morebytes)) > 0) {
+                
+                outfile.write(morebytes, 0, morebytes.length);
+                System.out.println("character was read to file" + morebytes[10]);
+                break;
+            }
+            
+
+            
+            outfile.close();
+            echoSocket.close();
+            outecho.close();
+
+            
+        } catch(UnknownHostException e){
+            System.err.println("Don't know about host " + hostName);
+            System.exit(1);
+        }catch(IOException e){
+            System.out.println("Couldn't get I/O for the connection to " + hostName);
+            System.exit(1);
+        }
+
+        
+        
+        
+    }
+}
